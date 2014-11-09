@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+/* CSS goes here. */
+
+.land {
+  fill: #ddd;
+}
+
+.land04 {
+  fill: #cdc;
+}
+
+.land32 {
+  fill: #cdd;
+}
+
+.boundary {
+  fill: none;
+  stroke: #777;
+  stroke-width: 0.5;
+  stroke-linejoin: round
+}
+
+.place,
+.place-label {
+  fill: #444;
+}
+
+text {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+
+var width = 960,
+    height = 1160;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+
+var projection = d3.geo.albers()
+    .center([0, 55.4])
+    .rotate([4.4, 0])
+    .parallels([50, 60])
+    .scale(1200 * 5)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path().pointRadius(0.8);
+
+d3.json("cities3.topo.json", function(error, az) {
+  if (error) return console.error(error);
+  counties = topojson.feature(az, az.objects.counties);
+
+  svg.append("path")
+      .datum(counties)
+      .attr("d", path);
+
+  svg.selectAll(".counties")
+    .data(topojson.feature(az, az.objects.counties).features)
+    .enter().append("path")
+    .attr("class", function(d) { return "land" + d.properties.state; })
+    .attr("d", path);
+
+  svg.append("path")
+      .datum(topojson.mesh(az, az.objects.counties, function(a, b) { return a !== b; }))
+      .attr("class", "boundary")
+      .attr("d", path);
+});
+
+
+d3.select(self.frameElement).style("height", height + "px");
+
+
+</script>
