@@ -25,15 +25,39 @@
 
 .place,
 .place-label {
-  fill: #444;
+  stroke: #000;
+  stroke-width: 0.8;
+  fill: none;
 }
 
-text {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 10px;
-  pointer-events: none;
+.county-label {
+  font-size: 6pt;
+  fill: #FAFAFA;
 }
 
+#Maricopa {
+  fill: #FF3300;
+}
+
+#Pinal {
+  fill: #C285C2;
+}
+
+#Cochise {
+  fill: #33CC33;
+}
+
+#Gila {
+  fill: #FFFF00;
+}
+
+#Navajo {
+  fill: #CC0066;
+}
+
+#Clark {
+  fill: #4D70DB;
+}
 
 </style>
 <body>
@@ -48,36 +72,64 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
+var projection = d3.geo.albersUsa().translate([1200,400]).scale(3600);
 
-var projection = d3.geo.albers()
-    .center([0, 55.4])
-    .rotate([4.4, 0])
-    .parallels([50, 60])
-    .scale(1200 * 5)
-    .translate([width / 2, height / 2]);
+var path = d3.geo.path().projection(projection)
+path.pointRadius(0.8);
 
-var path = d3.geo.path().pointRadius(0.8);
-
-d3.json("cities3.topo.json", function(error, az) {
+d3.json("cities.topo.json", function(error, data) {
   if (error) return console.error(error);
-  counties = topojson.feature(az, az.objects.counties);
+
+  counties = topojson.feature(data, data.objects.counties);
+  cities = topojson.feature(data, data.objects.cities);
 
   svg.append("path")
       .datum(counties)
       .attr("d", path);
 
   svg.selectAll(".counties")
-    .data(topojson.feature(az, az.objects.counties).features)
+    .data(topojson.feature(data, data.objects.counties).features)
     .enter().append("path")
+    .attr("id", function(d) { return d.properties.city;})
     .attr("class", function(d) { return "land" + d.properties.state; })
     .attr("d", path);
 
-  svg.append("path")
-      .datum(topojson.mesh(az, az.objects.counties, function(a, b) { return a !== b; }))
+  svg.selectAll(".counties")
+      .data(topojson.mesh(data, data.objects.counties, function(a, b) { return a !== b; }))
+      .enter().append("path")
       .attr("class", "boundary")
       .attr("d", path);
-});
 
+  svg.selectAll("text")
+    .data(counties.features)
+    .enter()
+    .append("svg:text")
+    .text(function(d){
+        return d.properties.city;
+    })
+    .attr("x", function(d){
+        return path.centroid(d)[0] - 15;
+    })
+    .attr("y", function(d){
+        return  path.centroid(d)[1];
+    })
+    .attr("class", "county-label");
+
+  svg.append("path")
+      .datum(cities)
+      .attr("d", path)
+      .attr("class", "place");
+
+  console.log(cities.features);
+  svg.selectAll("text")
+      .data(cities.features)
+      .enter().append("svg:text")
+      .attr("class", "county-label")
+      .attr("x", function(d) { return d.geometry.coordinates[0]})
+      .attr("y", function(d) { return d.geometry.coordinates[1]})
+      .text(function(d) { console.log(d.properties.city); return d.properties.city; });
+
+});
 
 d3.select(self.frameElement).style("height", height + "px");
 
